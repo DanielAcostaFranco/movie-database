@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Movie Database</title>
+    <title>CineStream - Movies</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
-
 <body>
-    <h1 class="title">Movie Database</h1>
-    <div id="movies-container"></div>
+    <nav class="navbar" id="navbar"></nav>
 
+    <div class="main-content">
+        <h2 class="page-title" id="section-title">Popular Movies</h2>
+
+        <div id="movies-container">
+            <div class="loading" style="grid-column:1/-1;">
+                <div class="spinner"></div>
+                <p>Loading movies...</p>
+            </div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/catalog.js"></script>
+    <script src="js/api.js"></script>
 </body>
-<script src="js/catalog.js"></script>
-<script src="js/api.js"></script>
-
 </html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plans - CineStream</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="main-content">
+        <div style="text-align:center; margin-bottom:40px; max-width:600px; margin-left:auto; margin-right:auto;">
+            <h1 class="page-title" style="text-align:center;">Choose Your Plan</h1>
+            <p style="color:var(--text-muted);">Access the full catalog. No commitments — cancel anytime.</p>
+        </div>
+
+        <div id="alert" class="alert" style="display:none; max-width:640px; margin:0 auto 28px;"></div>
+
+        <div class="plans-grid" id="plans-grid"></div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        const PLANS = [
+            {
+                id: 'basic',
+                name: 'Basic',
+                price: '$4.99',
+                features: ['HD Quality', '1 screen at a time', 'Ad-free', 'Full catalog']
+            },
+            {
+                id: 'standard',
+                name: 'Standard',
+                price: '$9.99',
+                popular: true,
+                features: ['Full HD Quality', '2 screens at a time', 'Ad-free', 'Full catalog', 'Offline downloads']
+            },
+            {
+                id: 'premium',
+                name: 'Premium',
+                price: '$14.99',
+                features: ['4K Ultra HD', '4 screens at a time', 'Ad-free', 'Full catalog', 'Offline downloads', 'Dolby spatial audio']
+            }
+        ];
+
+        function renderPlans(user) {
+            const currentPlan = user?.subscription?.active ? user.subscription.plan : null;
+
+            document.getElementById('plans-grid').innerHTML = PLANS.map(plan => `
+                <div class="plan-card ${plan.popular ? 'popular' : ''}">
+                    ${plan.popular ? '<span class="plan-badge">Most Popular</span>' : ''}
+                    <p class="plan-name">${plan.name}</p>
+                    <p class="plan-price">${plan.price}<span>/month</span></p>
+                    <ul class="plan-features">
+                        ${plan.features.map(f => `<li>${f}</li>`).join('')}
+                    </ul>
+                    ${user
+                        ? `<button class="plan-btn" onclick="subscribe('${plan.id}')"
+                            ${currentPlan === plan.id ? 'disabled' : ''}>
+                            ${currentPlan === plan.id ? '✓ Current Plan' : 'Select Plan'}
+                           </button>`
+                        : `<a href="/register.html" class="plan-btn">Get Started</a>`
+                    }
+                </div>`
+            ).join('');
+        }
+
+        async function subscribe(planId) {
+            const token = getToken();
+            if (!token) { window.location.href = '/login.html'; return; }
+
+            const alertEl = document.getElementById('alert');
+            alertEl.style.display = 'none';
+
+            document.querySelectorAll('.plan-btn').forEach(b => b.disabled = true);
+
+            try {
+                const res = await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ plan: planId })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alertEl.className = 'alert alert-error';
+                    alertEl.textContent = data.error || 'Failed to activate subscription';
+                    alertEl.style.display = 'block';
+                    document.querySelectorAll('.plan-btn').forEach(b => b.disabled = false);
+                    return;
+                }
+
+                alertEl.className = 'alert alert-success';
+                alertEl.textContent = 'Subscription activated! Redirecting to catalog...';
+                alertEl.style.display = 'block';
+                setTimeout(() => window.location.href = '/', 1800);
+            } catch {
+                alertEl.className = 'alert alert-error';
+                alertEl.textContent = 'Connection error. Please try again.';
+                alertEl.style.display = 'block';
+                document.querySelectorAll('.plan-btn').forEach(b => b.disabled = false);
+            }
+        }
+
+        (async () => {
+            const user = await getCurrentUser();
+            await renderNavbar(user);
+            renderPlans(user);
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - CineStream</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="main-content" id="profile-content">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading profile...</p>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        const PLAN_NAMES = { basic: 'Basic', standard: 'Standard', premium: 'Premium' };
+
+        async function loadProfile() {
+            const user = await requireAuth('/login.html');
+            if (!user) return;
+            await renderNavbar(user);
+
+            const initials = user.username ? user.username.charAt(0).toUpperCase() : '?';
+            const sub = user.subscription;
+            const planName = sub?.active ? (PLAN_NAMES[sub.plan] || sub.plan) : null;
+            const since = sub?.startDate
+                ? new Date(sub.startDate).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })
+                : null;
+
+            document.getElementById('profile-content').innerHTML = `
+                <div class="profile-header">
+                    <div class="profile-avatar">${initials}</div>
+                    <div class="profile-info">
+                        <h2>${user.username}</h2>
+                        <p>${user.email}</p>
+                        ${sub?.active
+                            ? `<span class="subscription-status active">● ${planName} Plan active</span>`
+                            : `<span class="subscription-status inactive">No active subscription</span>`}
+                    </div>
+                    <div style="margin-left:auto; display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
+                        ${!sub?.active ? `<a href="/checkout.html" class="btn btn-primary">Subscribe</a>` : ''}
+                        <button onclick="logout()" class="btn-logout">Sign Out</button>
+                    </div>
+                </div>
+
+                ${sub?.active ? `
+                <div style="margin-bottom:40px;">
+                    <h2 class="section-title">Your Subscription</h2>
+                    <div style="background:var(--bg-card); border-radius:8px; padding:24px; border:1px solid var(--border); max-width:400px;">
+                        <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:4px;">CURRENT PLAN</p>
+                        <p style="font-size:1.25rem; font-weight:700;">${planName} Plan</p>
+                        ${since ? `<p style="color:var(--text-muted); margin-top:10px; font-size:0.85rem;">Active since ${since}</p>` : ''}
+                        <a href="/checkout.html" style="display:inline-block; margin-top:16px; font-size:0.85rem; color:var(--accent); text-decoration:none;">Change plan →</a>
+                    </div>
+                </div>` : ''}
+
+                <div>
+                    <h2 class="section-title">My List</h2>
+                    <div id="watchlist-container">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            `;
+
+            loadWatchlist();
+        }
+
+        async function loadWatchlist() {
+            const res = await fetch('/api/watchlist', { headers: getAuthHeaders() });
+            const data = await res.json();
+            const container = document.getElementById('watchlist-container');
+
+            if (!data.watchlist || data.watchlist.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📽️</div>
+                        <p>Your list is empty.</p>
+                        <p style="margin-top:6px; font-size:0.85rem;">Add movies from their detail page.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="watchlist-grid">
+                    ${data.watchlist.map(m => `
+                        <div class="watchlist-item">
+                            <a href="/movie-detail.html?id=${m.id}">
+                                ${m.poster
+                                    ? `<img src="https://image.tmdb.org/t/p/w200${m.poster}" alt="${m.title}" loading="lazy">`
+                                    : `<div class="movie-no-poster" style="height:230px;">No image</div>`}
+                                <p>${m.title}</p>
+                            </a>
+                            <button class="watchlist-remove" onclick="removeFromWatchlist('${m.id}')" title="Remove from My List">✕</button>
+                        </div>`).join('')}
+                </div>`;
+        }
+
+        async function removeFromWatchlist(movieId) {
+            await fetch(`/api/watchlist/${movieId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            loadWatchlist();
+        }
+
+        loadProfile();
+    </script>
+</body>
+</html>

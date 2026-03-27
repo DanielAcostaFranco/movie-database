@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineStream</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <div id="movie-content">
+        <div class="loading" style="padding:80px;">
+            <div class="spinner"></div>
+            <p>Loading movie...</p>
+        </div>
+    </div>
+
+    <!-- Fake Player Overlay -->
+    <div class="player-overlay" id="player-overlay">
+        <div class="player-wrapper">
+            <button class="player-close" onclick="closePlayer()">✕</button>
+            <div class="player-container">
+                <div class="player-screen">
+                    <div id="player-loading">
+                        <div class="spinner"></div>
+                        <p style="color:#aaa; margin-top:8px;">Connecting to server...</p>
+                    </div>
+                    <div id="player-message" style="display:none; text-align:center; color:white;">
+                        <h3 id="player-title-text"></h3>
+                        <p style="margin-top:8px; color:#aaa;">▶ Now Playing</p>
+                        <p style="font-size:0.75rem; color:#444; margin-top:10px;">System preview</p>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <span class="player-icon">⏸</span>
+                    <div class="player-progress">
+                        <div class="player-progress-bar" id="progress-bar"></div>
+                    </div>
+                    <span class="player-time" id="player-time">0:00 / 1:58:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        let currentMovie = null;
+        let progressInterval = null;
+
+        async function loadMovieDetail() {
+            const params = new URLSearchParams(window.location.search);
+            const movieId = params.get('id');
+            if (!movieId) { window.location.href = '/'; return; }
+
+            //Everyone can view details
+            const user = await getCurrentUser();
+            await renderNavbar(user);
+
+            let movie;
+            try {
+                const res = await fetch(`/api/movies/${movieId}`);
+                if (!res.ok) throw new Error(`Server error: ${res.status}`);
+                movie = await res.json();
+                if (movie.success === false || movie.status_code) {
+                    throw new Error(movie.status_message || 'Movie not found');
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('movie-content').innerHTML = `
+                    <div class="main-content">
+                        <div class="empty-state">
+                            <div class="empty-icon">⚠️</div>
+                            <p>Could not load movie details</p>
+                            <p style="font-size:0.82rem; color:#666; margin-top:6px;">${err.message}</p>
+                            <a href="/" class="btn btn-primary" style="margin-top:20px;">Back to Home</a>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            currentMovie = movie;
+            document.title = `${movie.title} - CineStream`;
+
+            // ---- Build page ----
+            const year = movie.release_date ? movie.release_date.substring(0, 4) : 'N/A';
+            const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+            const runtime = movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : '';
+            const genres = (movie.genres || []).slice(0, 3)
+                .map(g => `<span class="badge badge-genre">${g.name}</span>`).join('');
+            const backdrop = movie.backdrop_path
+                ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}` : '';
+            const poster = movie.poster_path
+                ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : '';
+
+            // Play section — only this part is behind subscription
+            const hasSubscription = user?.subscription?.active;
+            let playSection;
+
+            if (hasSubscription) {
+                playSection = `
+                    <div class="movie-actions">
+                        <button class="btn-play" onclick="openPlayer()">▶ Play</button>
+                        <button class="btn-watchlist" id="watchlist-btn" onclick="addToWatchlist()">+ My List</button>
+                    </div>`;
+            } else if (user) {
+                playSection = `
+                    <div class="subscription-wall">
+                        <h3>Subscription required to watch</h3>
+                        <p>Pick a plan to watch this movie and the full catalog.</p>
+                        <a href="/checkout.html" class="btn btn-primary">View Plans</a>
+                    </div>`;
+            } else {
+                playSection = `
+                    <div class="subscription-wall">
+                        <h3>Sign in to watch</h3>
+                        <p>Create a free account and choose a plan.</p>
+                        <a href="/login.html" class="btn btn-primary" style="margin-right:10px;">Sign In</a>
+                        <a href="/register.html" class="btn btn-secondary">Sign Up</a>
+                    </div>`;
+            }
+
+            const similarMovies = (movie.similar?.results || []).slice(0, 8);
+
+            document.getElementById('movie-content').innerHTML = `
+                <div class="movie-detail-hero">
+                    <div class="movie-detail-poster">
+                        ${poster
+                            ? `<img src="${poster}" alt="${movie.title}">`
+                            : `<div class="no-poster">No image</div>`}
+                    </div>
+                    <div class="movie-detail-info">
+                        <h1>${movie.title}</h1>
+                        <div class="movie-badges">
+                            <span class="badge badge-year">${year}</span>
+                            <span class="badge badge-rating">★ ${rating}</span>
+                            ${runtime ? `<span class="badge badge-year">${runtime}</span>` : ''}
+                            ${genres}
+                        </div>
+                        ${movie.tagline ? `<p style="color:#aaa; font-style:italic; margin-bottom:12px; font-size:0.9rem;">"${movie.tagline}"</p>` : ''}
+                        <p class="movie-overview">${movie.overview || 'No description available.'}</p>
+                        ${playSection}
+                    </div>
+                </div>
+
+                <div class="main-content">
+                    ${movie.vote_count ? `<p style="color:#888; font-size:0.85rem; margin-bottom:24px;">Based on ${movie.vote_count.toLocaleString()} ratings</p>` : ''}
+
+                    ${similarMovies.length > 0 ? `
+                    <h2 class="page-title">Similar Movies</h2>
+                    <div class="similar-grid">
+                        ${similarMovies.map(m => `
+                            <a href="/movie-detail.html?id=${m.id}" class="movie-card">
+                                ${m.poster_path
+                    ? `<img src="https://image.tmdb.org/t/p/w200${m.poster_path}" alt="${m.title}" loading="lazy">`
+                    : `<div class="movie-no-poster">No image</div>`}
+                                <div class="movie-info">
+                                    <h3>${m.title}</h3>
+                                    <div class="movie-meta">
+                                        <span>${m.release_date?.substring(0, 4) || 'N/A'}</span>
+                                        <span class="rating">★ ${m.vote_average?.toFixed(1) || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </a>`).join('')}
+                    </div>` : ''}
+                </div>
+            `;
+        }
+
+        function openPlayer() {
+            document.getElementById('player-overlay').classList.add('active');
+            document.getElementById('player-title-text').textContent = currentMovie?.title || '';
+            document.getElementById('player-loading').style.display = 'block';
+            document.getElementById('player-message').style.display = 'none';
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('player-time').textContent = '0:00 / 1:58:00';
+
+            setTimeout(() => {
+                document.getElementById('player-loading').style.display = 'none';
+                document.getElementById('player-message').style.display = 'block';
+                startProgress();
+            }, 2200);
+        }
+
+        function closePlayer() {
+            document.getElementById('player-overlay').classList.remove('active');
+            if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+        }
+
+        function startProgress() {
+            let elapsed = 0;
+            const total = 7080;
+            progressInterval = setInterval(() => {
+                elapsed += 5;
+                const pct = (elapsed / total) * 100;
+                document.getElementById('progress-bar').style.width = `${Math.min(pct, 100)}%`;
+                const m = Math.floor(elapsed / 60);
+                const s = elapsed % 60;
+                document.getElementById('player-time').textContent =
+                    `${m}:${String(s).padStart(2, '0')} / 1:58:00`;
+                if (pct >= 100) { clearInterval(progressInterval); progressInterval = null; }
+            }, 5000);
+        }
+
+        async function addToWatchlist() {
+            if (!currentMovie) return;
+            if (!getToken()) { window.location.href = '/login.html'; return; }
+
+            const res = await fetch('/api/watchlist', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    movieId: String(currentMovie.id),
+                    title: currentMovie.title,
+                    poster: currentMovie.poster_path
+                })
+            });
+
+            if (res.ok) {
+                const btn = document.getElementById('watchlist-btn');
+                if (btn) { btn.textContent = '✓ In My List'; btn.disabled = true; }
+            }
+        }
+
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closePlayer(); });
+
+        loadMovieDetail();
+    </script>
+</body>
+
+</html>

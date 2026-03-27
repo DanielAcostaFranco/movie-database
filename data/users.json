@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1774556633932",
+    "username": "Daniel",
+    "email": "daniel@gmail.com",
+    "password": "8c0d60b2c867cf0fe1c858ea7f400938e118ed6422f6cc0dcf530eb5cc701519",
+    "token": "16fd540e9599f2b93f3405713fb13d83db820504ac03727891fed6948250af11",
+    "subscription": {
+      "plan": "premium",
+      "startDate": "2026-03-26T20:23:59.662Z",
+      "active": true
+    },
+    "watchlist": [],
+    "createdAt": "2026-03-26T20:23:53.932Z"
+  }
+]

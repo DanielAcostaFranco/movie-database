@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - CineStream</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar"></nav>
+    <div class="auth-page">
+        <div class="auth-box">
+            <a href="/" class="auth-logo">CineStream</a>
+            <h1>Create Account</h1>
+            <p class="subtitle">Join CineStream today</p>
+
+            <div id="alert" class="alert alert-error" style="display:none;"></div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Your name" required autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="you@email.com" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" placeholder="Repeat your password" required autocomplete="new-password">
+                </div>
+                <button type="submit" class="form-submit" id="submit-btn">Create Account</button>
+            </form>
+
+            <div class="auth-switch">
+                Already have an account? <a href="/login.html">Sign in</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        (async () => {
+            const user = await getCurrentUser();
+            await renderNavbar(user);
+            if (user) window.location.href = '/';
+        })();
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const alertEl = document.getElementById('alert');
+            const btn = document.getElementById('submit-btn');
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            alertEl.style.display = 'none';
+
+            if (password !== confirmPassword) {
+                alertEl.textContent = 'Passwords do not match';
+                alertEl.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Creating account...';
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value.trim(),
+                        email: document.getElementById('email').value.trim(),
+                        password
+                    })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alertEl.textContent = data.error || 'Registration failed';
+                    alertEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Create Account';
+                    return;
+                }
+
+                setAuth(data.token, data.user);
+                window.location.href = '/checkout.html';
+            } catch {
+                alertEl.textContent = 'Connection error. Make sure the server is running.';
+                alertEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+[
+  {
+    "id": "basic",
+    "name": "Básico",
+    "price": 4.99,
+    "features": ["Calidad HD", "1 pantalla a la vez", "Sin anuncios", "Catálogo completo"]
+  },
+  {
+    "id": "standard",
+    "name": "Estándar",
+    "price": 9.99,
+    "popular": true,
+    "features": ["Calidad Full HD", "2 pantallas a la vez", "Sin anuncios", "Catálogo completo", "Descargas offline"]
+  },
+  {
+    "id": "premium",
+    "name": "Premium",
+    "price": 14.99,
+    "features": ["Calidad 4K Ultra HD", "4 pantallas a la vez", "Sin anuncios", "Catálogo completo", "Descargas offline", "Audio espacial Dolby"]
+  }
+]
