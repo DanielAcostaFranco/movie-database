@@ -56,7 +56,7 @@
                         ${plan.features.map(f => `<li>${f}</li>`).join('')}
                     </ul>
                     ${user
-                        ? `<button class="plan-btn" onclick="subscribe('${plan.id}')"
+                        ? `<button class="plan-btn" onclick="goToPayment('${plan.id}')"
                             ${currentPlan === plan.id ? 'disabled' : ''}>
                             ${currentPlan === plan.id ? '✓ Current Plan' : 'Select Plan'}
                            </button>`
@@ -66,41 +66,10 @@
             ).join('');
         }
 
-        async function subscribe(planId) {
+        function goToPayment(planId) {
             const token = getToken();
             if (!token) { window.location.href = '/login.html'; return; }
-
-            const alertEl = document.getElementById('alert');
-            alertEl.style.display = 'none';
-
-            document.querySelectorAll('.plan-btn').forEach(b => b.disabled = true);
-
-            try {
-                const res = await fetch('/api/subscribe', {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({ plan: planId })
-                });
-                const data = await res.json();
-
-                if (!res.ok) {
-                    alertEl.className = 'alert alert-error';
-                    alertEl.textContent = data.error || 'Failed to activate subscription';
-                    alertEl.style.display = 'block';
-                    document.querySelectorAll('.plan-btn').forEach(b => b.disabled = false);
-                    return;
-                }
-
-                alertEl.className = 'alert alert-success';
-                alertEl.textContent = 'Subscription activated! Redirecting to catalog...';
-                alertEl.style.display = 'block';
-                setTimeout(() => window.location.href = '/', 1800);
-            } catch {
-                alertEl.className = 'alert alert-error';
-                alertEl.textContent = 'Connection error. Please try again.';
-                alertEl.style.display = 'block';
-                document.querySelectorAll('.plan-btn').forEach(b => b.disabled = false);
-            }
+            window.location.href = `/payment.html?plan=${planId}`;
         }
 
         (async () => {

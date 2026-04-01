@@ -115,6 +115,45 @@ body {
 }
 
 
+/* ---- FILTER BAR ---- */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+    align-items: center;
+}
+
+.filter-bar select {
+    padding: 7px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    background: white;
+    color: #222;
+    cursor: pointer;
+    outline: none;
+}
+
+.filter-bar select:focus {
+    border-color: #e50914;
+}
+
+#filter-reset {
+    padding: 7px 16px;
+    background: transparent;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: #555;
+}
+
+#filter-reset:hover {
+    border-color: #e50914;
+    color: #e50914;
+}
+
 /* ---- MOVIES GRID ---- */
 #movies-container {
     display: grid;

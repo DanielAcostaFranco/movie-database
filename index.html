@@ -12,6 +12,27 @@
     <div class="main-content">
         <h2 class="page-title" id="section-title">Popular Movies</h2>
 
+        <div class="filter-bar">
+            <select id="filter-genre">
+                <option value="">All Genres</option>
+            </select>
+            <select id="filter-sort">
+                <option value="">Most Popular</option>
+                <option value="title.asc">A → Z</option>
+                <option value="title.desc">Z → A</option>
+                <option value="vote_average.desc">Top Rated</option>
+                <option value="release_date.desc">Newest First</option>
+                <option value="release_date.asc">Oldest First</option>
+            </select>
+            <select id="filter-duration">
+                <option value="">Any Duration</option>
+                <option value="short">Short (&lt; 90 min)</option>
+                <option value="medium">Medium (90–120 min)</option>
+                <option value="long">Long (&gt; 120 min)</option>
+            </select>
+            <button id="filter-reset">Reset</button>
+        </div>
+
         <div id="movies-container">
             <div class="loading" style="grid-column:1/-1;">
                 <div class="spinner"></div>

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment - CineStream</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .payment-wrapper {
+            min-height: calc(100vh - 56px);
+            background: #f0f2f5;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 48px 16px;
+        }
+
+        .payment-layout {
+            display: flex;
+            gap: 28px;
+            width: 100%;
+            max-width: 860px;
+            align-items: flex-start;
+        }
+
+        /* ---- ORDER SUMMARY ---- */
+        .order-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            width: 280px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .order-summary h3 {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #888;
+            margin-bottom: 18px;
+        }
+
+        .order-plan-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .order-plan-desc {
+            font-size: 0.82rem;
+            color: #777;
+            margin-top: 4px;
+            margin-bottom: 20px;
+        }
+
+        .order-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            color: #444;
+            padding: 8px 0;
+            border-top: 1px solid #eee;
+        }
+
+        .order-line.total {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #111;
+            border-top: 2px solid #ddd;
+            margin-top: 4px;
+            padding-top: 14px;
+        }
+
+        .order-badge {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 99px;
+            margin-top: 14px;
+            font-weight: 600;
+        }
+
+        /* ---- PAYMENT FORM ---- */
+        .payment-form-box {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .payment-form-box h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #111;
+        }
+
+        .secure-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: #2e7d32;
+            margin-bottom: 26px;
+        }
+
+        .secure-badge svg {
+            flex-shrink: 0;
+        }
+
+        /* card brand icons */
+        .card-brands {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 22px;
+        }
+
+        .card-brand {
+            border: 1.5px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #555;
+            background: white;
+            letter-spacing: 0.02em;
+        }
+
+        .card-brand.visa   { color: #1a1f71; }
+        .card-brand.mc     { color: #eb001b; }
+        .card-brand.amex   { color: #007bc1; }
+
+        /* form fields */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #111;
+            background: #fafafa;
+            outline: none;
+            transition: border-color 0.15s;
+            font-family: 'Courier New', monospace;
+        }
+
+        .form-group input:focus {
+            border-color: #1a1f71;
+            background: white;
+        }
+
+        .form-group input.error {
+            border-color: #e50914;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 14px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .field-error {
+            font-size: 0.75rem;
+            color: #e50914;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .field-error.show { display: block; }
+
+        /* card visual */
+        .card-preview {
+            background: linear-gradient(135deg, #1a1f71 0%, #3d5af1 60%, #e50914 100%);
+            border-radius: 14px;
+            padding: 22px 24px;
+            color: white;
+            margin-bottom: 26px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 24px rgba(26,31,113,0.3);
+        }
+
+        .card-preview::before {
+            content: '';
+            position: absolute;
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.07);
+            top: -60px; right: -40px;
+        }
+
+        .card-preview::after {
+            content: '';
+            position: absolute;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            bottom: -40px; left: 20px;
+        }
+
+        .card-chip {
+            width: 38px; height: 28px;
+            background: linear-gradient(135deg, #d4a843, #f0c96a);
+            border-radius: 5px;
+            margin-bottom: 18px;
+        }
+
+        .card-number-display {
+            font-size: 1.05rem;
+            letter-spacing: 0.2em;
+            margin-bottom: 18px;
+            font-family: 'Courier New', monospace;
+            opacity: 0.95;
+        }
+
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+        }
+
+        .card-bottom span { opacity: 0.75; font-size: 0.65rem; text-transform: uppercase; margin-bottom: 2px; display: block; }
+        .card-bottom strong { font-size: 0.85rem; }
+
+        /* pay button */
+        .pay-btn {
+            width: 100%;
+            padding: 14px;
+            background: #e50914;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.15s;
+            letter-spacing: 0.02em;
+        }
+
+        .pay-btn:hover { background: #c0080f; }
+        .pay-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+        .pay-note {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-top: 14px;
+        }
+
+        /* success state */
+        .success-screen {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-icon {
+            width: 64px; height: 64px;
+            background: #e8f5e9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            font-size: 2rem;
+        }
+
+        .success-screen h2 { font-size: 1.3rem; color: #111; margin-bottom: 8px; }
+        .success-screen p  { font-size: 0.9rem; color: #666; }
+
+        /* alert */
+        .pay-alert {
+            background: #fde8e8;
+            color: #c0080f;
+            border: 1px solid #f5c6c6;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        @media (max-width: 700px) {
+            .payment-layout { flex-direction: column; }
+            .order-summary  { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="payment-wrapper">
+        <div class="payment-layout">
+
+            <!-- Order Summary -->
+            <div class="order-summary">
+                <h3>Order Summary</h3>
+                <div class="order-plan-name" id="sum-plan">Standard</div>
+                <div class="order-plan-desc">Monthly subscription</div>
+                <div class="order-line">
+                    <span>Subtotal</span>
+                    <span id="sum-price">$9.99</span>
+                </div>
+                <div class="order-line">
+                    <span>Tax</span>
+                    <span>$0.00</span>
+                </div>
+                <div class="order-line total">
+                    <span>Total today</span>
+                    <span id="sum-total">$9.99</span>
+                </div>
+                <div class="order-badge">Cancel anytime</div>
+            </div>
+
+            <!-- Payment Form -->
+            <div class="payment-form-box">
+                <div id="form-section">
+                    <h2>Payment Details</h2>
+                    <div class="secure-badge">
+                        <svg width="13" height="15" viewBox="0 0 13 15" fill="none">
+                            <path d="M6.5 0L0 2.5V7c0 3.87 2.77 7.5 6.5 8.5C10.23 14.5 13 10.87 13 7V2.5L6.5 0Z" fill="#2e7d32"/>
+                            <path d="M5.5 9.5l-2-2 1-1 1 1 3-3 1 1-4 4Z" fill="white"/>
+                        </svg>
+                        256-bit SSL encrypted secure payment
+                    </div>
+
+                    <!-- Card brand logos -->
+                    <div class="card-brands">
+                        <span class="card-brand visa">VISA</span>
+                        <span class="card-brand mc">MC</span>
+                        <span class="card-brand amex">AMEX</span>
+                    </div>
+
+                    <!-- Card preview -->
+                    <div class="card-preview">
+                        <div class="card-chip"></div>
+                        <div class="card-number-display" id="preview-number">•••• •••• •••• ••••</div>
+                        <div class="card-bottom">
+                            <div>
+                                <span>Card Holder</span>
+                                <strong id="preview-name">FULL NAME</strong>
+                            </div>
+                            <div style="text-align:right">
+                                <span>Expires</span>
+                                <strong id="preview-expiry">MM/YY</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pay-alert" id="pay-alert"></div>
+
+                    <div class="form-group">
+                        <label>Card Number</label>
+                        <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19" autocomplete="cc-number">
+                        <div class="field-error" id="err-number">Enter a valid 16-digit card number.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Cardholder Name</label>
+                        <input type="text" id="card-name" placeholder="Name as it appears on card" autocomplete="cc-name" style="font-family: Arial, sans-serif;">
+                        <div class="field-error" id="err-name">Enter the cardholder name.</div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Expiration Date</label>
+                            <input type="text" id="card-expiry" placeholder="MM / YY" maxlength="7" autocomplete="cc-exp">
+                            <div class="field-error" id="err-expiry">Enter a valid expiry date.</div>
+                        </div>
+                        <div class="form-group">
+                            <label>CVV</label>
+                            <input type="text" id="card-cvv" placeholder="•••" maxlength="4" autocomplete="cc-csc">
+                            <div class="field-error" id="err-cvv">Enter the 3 or 4-digit CVV.</div>
+                        </div>
+                    </div>
+
+                    <button class="pay-btn" id="pay-btn" onclick="handlePay()">
+                        Pay <span id="btn-amount">$9.99</span>
+                    </button>
+                    <p class="pay-note">You can cancel your subscription at any time from your profile.</p>
+                </div>
+
+                <!-- Success screen -->
+                <div class="success-screen" id="success-screen">
+                    <div class="success-icon">✓</div>
+                    <h2>Payment Successful!</h2>
+                    <p>Your <strong id="success-plan"></strong> plan is now active.<br>Redirecting to the catalog...</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        const PLAN_DATA = {
+            basic:    { name: 'Basic',    price: '$4.99' },
+            standard: { name: 'Standard', price: '$9.99' },
+            premium:  { name: 'Premium',  price: '$14.99' }
+        };
+
+        const params = new URLSearchParams(window.location.search);
+        const planId = params.get('plan') || 'standard';
+        const plan   = PLAN_DATA[planId] || PLAN_DATA.standard;
+
+        // Populate order summary
+        document.getElementById('sum-plan').textContent   = plan.name;
+        document.getElementById('sum-price').textContent  = plan.price;
+        document.getElementById('sum-total').textContent  = plan.price;
+        document.getElementById('btn-amount').textContent = plan.price;
+
+        // ---- Live card preview ----
+        document.getElementById('card-number').addEventListener('input', function () {
+            let val = this.value.replace(/\D/g, '').slice(0, 16);
+            this.value = val.replace(/(.{4})/g, '$1 ').trim();
+            const display = val.padEnd(16, '•').replace(/(.{4})/g, '$1 ').trim();
+            document.getElementById('preview-number').textContent = display;
+        });
+
+        document.getElementById('card-name').addEventListener('input', function () {
+            document.getElementById('preview-name').textContent = this.value.toUpperCase() || 'FULL NAME';
+        });
+
+        document.getElementById('card-expiry').addEventListener('input', function () {
+            let val = this.value.replace(/\D/g, '').slice(0, 4);
+            if (val.length >= 3) val = val.slice(0, 2) + ' / ' + val.slice(2);
+            this.value = val;
+            document.getElementById('preview-expiry').textContent = val || 'MM/YY';
+        });
+
+        document.getElementById('card-cvv').addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').slice(0, 4);
+        });
+
+        // ---- Validation ----
+        function showError(id, show) {
+            const el = document.getElementById(id);
+            el.classList.toggle('show', show);
+            const input = el.previousElementSibling;
+            input.classList.toggle('error', show);
+        }
+
+        function validate() {
+            const number  = document.getElementById('card-number').value.replace(/\s/g, '');
+            const name    = document.getElementById('card-name').value.trim();
+            const expiry  = document.getElementById('card-expiry').value.replace(/\s/g, '');
+            const cvv     = document.getElementById('card-cvv').value.trim();
+
+            let valid = true;
+            if (number.length !== 16) { showError('err-number', true); valid = false; } else showError('err-number', false);
+            if (!name)                { showError('err-name', true);   valid = false; } else showError('err-name', false);
+            if (!/^\d{2}\/\d{2}$/.test(expiry)) { showError('err-expiry', true); valid = false; } else showError('err-expiry', false);
+            if (cvv.length < 3)       { showError('err-cvv', true);    valid = false; } else showError('err-cvv', false);
+
+            return valid;
+        }
+
+        // ---- Submit ----
+        async function handlePay() {
+            if (!validate()) return;
+
+            const btn = document.getElementById('pay-btn');
+            const alertEl = document.getElementById('pay-alert');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            alertEl.style.display = 'none';
+
+            // Simulate a brief processing delay
+            await new Promise(r => setTimeout(r, 1600));
+
+            const token = getToken();
+            if (!token) { window.location.href = '/login.html'; return; }
+
+            try {
+                const res  = await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ plan: planId })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alertEl.textContent = data.error || 'Payment failed. Please try again.';
+                    alertEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerHTML = `Pay <span>${plan.price}</span>`;
+                    return;
+                }
+
+                // Show success
+                document.getElementById('form-section').style.display   = 'none';
+                document.getElementById('success-screen').style.display = 'block';
+                document.getElementById('success-plan').textContent      = plan.name;
+                setTimeout(() => window.location.href = '/', 2200);
+
+            } catch {
+                alertEl.textContent = 'Connection error. Please try again.';
+                alertEl.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = `Pay <span>${plan.price}</span>`;
+            }
+        }
+
+        (async () => {
+            const user = await getCurrentUser();
+            await renderNavbar(user);
+            if (!user) window.location.href = '/login.html';
+        })();
+    </script>
+</body>
+</html>

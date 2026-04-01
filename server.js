@@ -178,13 +178,70 @@ app.delete('/api/watchlist/:movieId', requireAuth, (req, res) => {
 });
 
 // ---- MOVIES (TMDB proxy) ----
+app.get('/api/genres', async (_req, res) => {
+    try {
+        const key = process.env.TMDB_API_KEY;
+        const response = await fetch(`https://api.themoviedb.org/3/genre/movie/list?api_key=${key}&language=en-US`);
+        const data = await response.json();
+        res.json(data);
+    } catch (err) {
+        console.error('Error fetching genres:', err.message);
+        res.status(500).json({ genres: [] });
+    }
+});
+
+function applyClientFilters(results, genre, sort_by) {
+    let filtered = results;
+
+    if (genre) {
+        const genreId = parseInt(genre);
+        filtered = filtered.filter(m => Array.isArray(m.genre_ids) && m.genre_ids.includes(genreId));
+    }
+
+    if (sort_by) {
+        const [field, dir] = sort_by.split('.');
+        const asc = dir === 'asc';
+        const key = field === 'title' ? 'title'
+                  : field === 'vote_average' ? 'vote_average'
+                  : field === 'release_date' ? 'release_date'
+                  : null;
+        if (key) {
+            filtered = [...filtered].sort((a, b) => {
+                const va = a[key] ?? '';
+                const vb = b[key] ?? '';
+                if (typeof va === 'string') return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+                return asc ? va - vb : vb - va;
+            });
+        }
+    }
+
+    return filtered;
+}
+
 app.get('/api/movies', async (req, res) => {
     try {
-        const { page = 1, search } = req.query;
+        const { page = 1, search, genre, sort_by, duration } = req.query;
         const key = process.env.TMDB_API_KEY;
-        const url = search
-            ? `https://api.themoviedb.org/3/search/movie?api_key=${key}&query=${encodeURIComponent(search)}&page=${page}`
-            : `https://api.themoviedb.org/3/movie/popular?api_key=${key}&page=${page}`;
+
+        let url;
+        if (search) {
+            url = `https://api.themoviedb.org/3/search/movie?api_key=${key}&query=${encodeURIComponent(search)}&page=${page}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            // TMDB search doesn't support genre/sort — apply them manually
+            const results = applyClientFilters(data.results || [], genre, sort_by);
+            return res.json({ ...data, results });
+        } else if (genre || sort_by || duration) {
+            const params = new URLSearchParams({ api_key: key, page, sort_by: sort_by || 'popularity.desc' });
+            if (genre) params.set('with_genres', genre);
+            if (duration === 'short') params.set('with_runtime.lte', '90');
+            else if (duration === 'medium') { params.set('with_runtime.gte', '90'); params.set('with_runtime.lte', '120'); }
+            else if (duration === 'long') params.set('with_runtime.gte', '120');
+            url = `https://api.themoviedb.org/3/discover/movie?${params}`;
+        } else {
+            url = `https://api.themoviedb.org/3/movie/popular?api_key=${key}&page=${page}`;
+        }
+
         const response = await fetch(url);
         const data = await response.json();
         res.json(data);
