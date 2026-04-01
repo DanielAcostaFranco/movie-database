@@ -133,30 +133,30 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
 });
 
 // ---- SUBSCRIPTION ----
-app.post('/api/subscribe', requireAuth, (req, res) => {
-    const { plan } = req.body || {};
-    if (!['basic', 'standard', 'premium'].includes(plan)) {
-        return res.status(400).json({ error: 'Invalid plan' });
+function requireSubscription(req, res, next) {
+    if (!req.user?.subscription?.active) {
+        return res.status(403).json({ error: 'Subscription required' });
     }
+    next();
+}
 
+app.post('/api/subscribe', requireAuth, (req, res) => {
     const users = getUsers();
     const idx = users.findIndex(u => u.id === req.user.id);
     users[idx].subscription = {
-        plan,
         startDate: new Date().toISOString(),
         active: true
     };
     saveUsers(users);
-
     res.json({ success: true, subscription: users[idx].subscription });
 });
 
 // ---- WATCHLIST ----
-app.get('/api/watchlist', requireAuth, (req, res) => {
+app.get('/api/watchlist', requireAuth, requireSubscription, (req, res) => {
     res.json({ watchlist: req.user.watchlist || [] });
 });
 
-app.post('/api/watchlist', requireAuth, (req, res) => {
+app.post('/api/watchlist', requireAuth, requireSubscription, (req, res) => {
     const { movieId, title, poster } = req.body || {};
     const users = getUsers();
     const idx = users.findIndex(u => u.id === req.user.id);
@@ -169,7 +169,7 @@ app.post('/api/watchlist', requireAuth, (req, res) => {
     res.json({ success: true, watchlist: users[idx].watchlist });
 });
 
-app.delete('/api/watchlist/:movieId', requireAuth, (req, res) => {
+app.delete('/api/watchlist/:movieId', requireAuth, requireSubscription, (req, res) => {
     const users = getUsers();
     const idx = users.findIndex(u => u.id === req.user.id);
     users[idx].watchlist = users[idx].watchlist.filter(m => m.id !== req.params.movieId);
@@ -251,7 +251,7 @@ app.get('/api/movies', async (req, res) => {
     }
 });
 
-app.get('/api/movies/:id', async (req, res) => {
+app.get('/api/movies/:id', requireAuth, requireSubscription, async (req, res) => {
     try {
         const key = process.env.TMDB_API_KEY;
         const url = `https://api.themoviedb.org/3/movie/${req.params.id}?api_key=${key}&append_to_response=similar`;

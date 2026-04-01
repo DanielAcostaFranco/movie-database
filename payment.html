@@ -415,21 +415,12 @@
 
     <script src="js/auth.js"></script>
     <script>
-        const PLAN_DATA = {
-            basic:    { name: 'Basic',    price: '$4.99' },
-            standard: { name: 'Standard', price: '$9.99' },
-            premium:  { name: 'Premium',  price: '$14.99' }
-        };
+        const PRICE = '$9.99';
 
-        const params = new URLSearchParams(window.location.search);
-        const planId = params.get('plan') || 'standard';
-        const plan   = PLAN_DATA[planId] || PLAN_DATA.standard;
-
-        // Populate order summary
-        document.getElementById('sum-plan').textContent   = plan.name;
-        document.getElementById('sum-price').textContent  = plan.price;
-        document.getElementById('sum-total').textContent  = plan.price;
-        document.getElementById('btn-amount').textContent = plan.price;
+        document.getElementById('sum-plan').textContent   = 'CineStream';
+        document.getElementById('sum-price').textContent  = PRICE;
+        document.getElementById('sum-total').textContent  = PRICE;
+        document.getElementById('btn-amount').textContent = PRICE;
 
         // ---- Live card preview ----
         document.getElementById('card-number').addEventListener('input', function () {
@@ -496,8 +487,7 @@
             try {
                 const res  = await fetch('/api/subscribe', {
                     method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({ plan: planId })
+                    headers: getAuthHeaders()
                 });
                 const data = await res.json();
 
@@ -505,21 +495,20 @@
                     alertEl.textContent = data.error || 'Payment failed. Please try again.';
                     alertEl.style.display = 'block';
                     btn.disabled = false;
-                    btn.innerHTML = `Pay <span>${plan.price}</span>`;
+                    btn.innerHTML = `Pay <span>${PRICE}</span>`;
                     return;
                 }
 
-                // Show success
                 document.getElementById('form-section').style.display   = 'none';
                 document.getElementById('success-screen').style.display = 'block';
-                document.getElementById('success-plan').textContent      = plan.name;
+                document.getElementById('success-plan').textContent      = 'CineStream';
                 setTimeout(() => window.location.href = '/', 2200);
 
             } catch {
                 alertEl.textContent = 'Connection error. Please try again.';
                 alertEl.style.display = 'block';
                 btn.disabled = false;
-                btn.innerHTML = `Pay <span>${plan.price}</span>`;
+                btn.innerHTML = `Pay <span>${PRICE}</span>`;
             }
         }
 

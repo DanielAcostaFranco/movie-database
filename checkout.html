@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plans - CineStream</title>
+    <title>Subscribe - CineStream</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -11,71 +11,41 @@
 
     <div class="main-content">
         <div style="text-align:center; margin-bottom:40px; max-width:600px; margin-left:auto; margin-right:auto;">
-            <h1 class="page-title" style="text-align:center;">Choose Your Plan</h1>
-            <p style="color:var(--text-muted);">Access the full catalog. No commitments — cancel anytime.</p>
+            <h1 class="page-title" style="text-align:center;">Get Full Access</h1>
+            <p style="color:var(--text-muted);">Watch the full catalog in HD. No commitments — cancel anytime.</p>
         </div>
 
-        <div id="alert" class="alert" style="display:none; max-width:640px; margin:0 auto 28px;"></div>
-
-        <div class="plans-grid" id="plans-grid"></div>
+        <div style="max-width:380px; margin:0 auto;">
+            <div class="plan-card popular" style="text-align:center;">
+                <span class="plan-badge">Full Access</span>
+                <p class="plan-name">CineStream</p>
+                <p class="plan-price">$9.99<span>/month</span></p>
+                <ul class="plan-features" style="text-align:left;">
+                    <li>Full HD Quality</li>
+                    <li>Unlimited movies</li>
+                    <li>Ad-free experience</li>
+                    <li>Personal watchlist</li>
+                    <li>Cancel anytime</li>
+                </ul>
+                <div id="plan-action"></div>
+            </div>
+        </div>
     </div>
 
     <script src="js/auth.js"></script>
     <script>
-        const PLANS = [
-            {
-                id: 'basic',
-                name: 'Basic',
-                price: '$4.99',
-                features: ['HD Quality', '1 screen at a time', 'Ad-free', 'Full catalog']
-            },
-            {
-                id: 'standard',
-                name: 'Standard',
-                price: '$9.99',
-                popular: true,
-                features: ['Full HD Quality', '2 screens at a time', 'Ad-free', 'Full catalog', 'Offline downloads']
-            },
-            {
-                id: 'premium',
-                name: 'Premium',
-                price: '$14.99',
-                features: ['4K Ultra HD', '4 screens at a time', 'Ad-free', 'Full catalog', 'Offline downloads', 'Dolby spatial audio']
-            }
-        ];
-
-        function renderPlans(user) {
-            const currentPlan = user?.subscription?.active ? user.subscription.plan : null;
-
-            document.getElementById('plans-grid').innerHTML = PLANS.map(plan => `
-                <div class="plan-card ${plan.popular ? 'popular' : ''}">
-                    ${plan.popular ? '<span class="plan-badge">Most Popular</span>' : ''}
-                    <p class="plan-name">${plan.name}</p>
-                    <p class="plan-price">${plan.price}<span>/month</span></p>
-                    <ul class="plan-features">
-                        ${plan.features.map(f => `<li>${f}</li>`).join('')}
-                    </ul>
-                    ${user
-                        ? `<button class="plan-btn" onclick="goToPayment('${plan.id}')"
-                            ${currentPlan === plan.id ? 'disabled' : ''}>
-                            ${currentPlan === plan.id ? '✓ Current Plan' : 'Select Plan'}
-                           </button>`
-                        : `<a href="/register.html" class="plan-btn">Get Started</a>`
-                    }
-                </div>`
-            ).join('');
-        }
-
-        function goToPayment(planId) {
-            const token = getToken();
-            if (!token) { window.location.href = '/login.html'; return; }
-            window.location.href = `/payment.html?plan=${planId}`;
-        }
-
         (async () => {
             const user = await getCurrentUser();
             await renderNavbar(user);
-            renderPlans(user);
+
+            const el = document.getElementById('plan-action');
+            if (!user) {
+                el.innerHTML = `<a href="/register.html" class="plan-btn">Get Started</a>`;
+            } else if (user.subscription?.active) {
+                el.innerHTML = `<button class="plan-btn" disabled>✓ Already Subscribed</button>`;
+            } else {
+                el.innerHTML = `<button class="plan-btn" onclick="window.location.href='/payment.html'">Subscribe Now</button>`;
+            }
         })();
     </script>
 </body>
