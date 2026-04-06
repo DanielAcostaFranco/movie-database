@@ -202,9 +202,9 @@ function applyClientFilters(results, genre, sort_by) {
         const [field, dir] = sort_by.split('.');
         const asc = dir === 'asc';
         const key = field === 'title' ? 'title'
-                  : field === 'vote_average' ? 'vote_average'
-                  : field === 'release_date' ? 'release_date'
-                  : null;
+            : field === 'vote_average' ? 'vote_average'
+                : field === 'release_date' ? 'release_date'
+                    : null;
         if (key) {
             filtered = [...filtered].sort((a, b) => {
                 const va = a[key] ?? '';
@@ -251,7 +251,7 @@ app.get('/api/movies', async (req, res) => {
     }
 });
 
-app.get('/api/movies/:id', requireAuth, requireSubscription, async (req, res) => {
+app.get('/api/movies/:id', async (req, res) => {
     try {
         const key = process.env.TMDB_API_KEY;
         const url = `https://api.themoviedb.org/3/movie/${req.params.id}?api_key=${key}&append_to_response=similar`;

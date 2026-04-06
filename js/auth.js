@@ -69,7 +69,7 @@ async function renderNavbar(user) {
     const nav = document.getElementById('navbar');
     if (!nav) return;
     nav.innerHTML = `
-        <div class="nav-brand"><a href="/">CineStream</a></div>
+        <div class="nav-brand"><a href="/">Detflix</a></div>
         <form class="nav-search" onsubmit="handleNavSearch(event)">
             <input type="text" id="nav-search-input" placeholder="Search movies...">
             <button type="submit">Search</button>
